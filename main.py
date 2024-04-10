@@ -13,6 +13,8 @@ excecuting the above query in mysql database
 6. The code will generate a html file named mapped.html which will contain the map with the center point and the grid points
 7. The center point is the center of the grid
 
+IMPORTANT - THE MAP.HTML FILE WILL BE GENERATED IN THE SAME DIRECTORY AS THE LOCATION WHERE THE COMMAND IS RUN
+
 '''
 import math
 import mysql.connector
@@ -99,7 +101,7 @@ def store_grid_points(database, table, center_id, grid):
 # please provide the center point in the form of (latitude, longitude)
 center_point = (23.0225, 72.5714)
 # You can change the distance_km to generate a different grid
-distance_km = 19
+distance_km = 40
 database = 'internetshipdb'
 table_original = 'center_points'
 table_grid = 'grid_points'
