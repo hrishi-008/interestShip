@@ -1,9 +1,6 @@
 import math
-
 import folium
-
 import mysql.connector
-
 
 def select_center_point(database : 'internetShipDB', table, criteria):
     connector = mysql.connector.connect(
