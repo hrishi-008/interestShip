@@ -1,62 +1,60 @@
 import math
-import folium
 import mysql.connector
+import folium
 
-def select_center_point(database : 'internetShipDB', table, criteria):
-    conn = mysql.connector.connect(
+def select_center_point(database, table, criteria):
+    connector = mysql.connector.connect(
         host='localhost',
         user='root',
         password='12373',
         database=database
     )
-    cursor = conn.cursor()
-    cursor.execute(f"SELECT lat, lng FROM {table} WHERE {criteria};")
+    cursor = connector.cursor()
+    cursor.execute(f"SELECT latitude, longitude FROM {table} WHERE {criteria};")
     center_point = cursor.fetchone()
-    conn.close()
+    connector.close()
     return center_point
 
-def generate_grid(center_point, distance_km):
+def generate_grid(cent_point, distance_km):
     grid = []
-    center_lat, center_lng = center_point
-    delta_lat = (distance_km / 111.32) / 9  
-    delta_lng = (distance_km / (111.32 * math.cos(math.radians(center_lat)))) / 9
-
+    cent_lat, cent_lng = cent_point
+    del_lat = (distance_km / 111.32) / 9
+    del_lng = (distance_km / (111.32 * math.cos(math.radians(cent_lat)))) / 9
     for i in range(9):
         for j in range(9):
-            lat = center_lat + (i - 4) * delta_lat
-            lng = center_lng + (j - 4) * delta_lng
+            lat = cent_lat + (i - 4) * del_lat
+            lng = cent_lng + (j - 4) * del_lng
             grid.append((lat, lng))
-    
     return grid
 
-def store_grid_points(database:'internetShipDB', table, center_point, grid):
-    conn = mysql.connector.connect(
+def store_grid_points(database, table, cent_point, grid, original_table_id):
+    connector = mysql.connector.connect(
         host='localhost',
         user='root',
         password='12373',
         database=database
     )
-    cursor = conn.cursor()
-    cursor.execute(f"CREATE TABLE IF NOT EXISTS {table} (id INT AUTO_INCREMENT PRIMARY KEY, center_lat FLOAT, center_lng FLOAT, grid_lat FLOAT, grid_lng FLOAT);")
-    center_lat, center_lng = center_point
+    cursor = connector.cursor()
+    cursor.execute(f"CREATE TABLE IF NOT EXISTS {table} (id INT AUTO_INCREMENT PRIMARY KEY, original_id INT, cent_lat FLOAT, cent_lng FLOAT, latitude FLOAT, longitude FLOAT);")
+    cent_lat, cent_lng = cent_point
     for point in grid:
-        cursor.execute(f"INSERT INTO {table} (center_lat, center_lng, grid_lat, grid_lng) VALUES (%s, %s, %s, %s);",
-                       (center_lat, center_lng, point[0], point[1]))
-    conn.commit()
-    conn.close()
+        cursor.execute(f"INSERT INTO {table} (original_id, cent_lat, cent_lng, latitude, longitude) VALUES (%s, %s, %s, %s, %s);",
+                       (original_table_id, cent_lat, cent_lng, point[0], point[1]))
+    connector.commit()
+    connector.close()
 
 center_point = (23.0225, 72.5714)  
-distance_km = 20
-database = 'internetShipDB'  
-table_original = 'center_points'  
-table_grid = 'grid_points'  
-
+distance_km = 10
+database = 'internetShipDB'
+table_original = 'center_points'
+table_grid = 'grid_points'
+original_table_id = 1
 
 grid = generate_grid(center_point, distance_km)
 
-store_grid_points(database, table_grid, center_point, grid)
+store_grid_points(database, table_grid, center_point, grid, original_table_id)
 
-map_center = folium.Map(location=center_point, zoom_start=12)
+map_center = folium.Map(location=center_point, tiles='OpenStreetMap', zoom_start=12)
 
 for point in grid:
     folium.Marker(location=point).add_to(map_center)
